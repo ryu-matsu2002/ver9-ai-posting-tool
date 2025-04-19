@@ -4,7 +4,7 @@ import time
 import threading
 import requests
 from openai import OpenAI
-from concurrent.futures import ThreadPoolExecutor  # 並列処理用
+from concurrent.futures import ThreadPoolExecutor  # ✅ これを忘れずに追加！
 from .models import db, ScheduledPost
 from flask import current_app
 
@@ -25,41 +25,40 @@ def generate_article(post_id, title_prompt, body_prompt, openai_api_key, pixabay
 
             client = OpenAI(api_key=openai_api_key)
 
-            # 🔹 タイトル生成（gpt-4-turbo）
+            # 🔹 タイトル生成
             print("🔹 タイトル生成開始")
             sys.stdout.flush()
             title_response = client.chat.completions.create(
-                model="gpt-4-turbo",  # 新しいモデル gpt-4-turbo を使用
+                model="gpt-4-turbo",  # gpt-4-turboを使用
                 messages=[{
                     "role": "user",
                     "content": f"キーワード: {post.keyword}\n\n{title_prompt}"
                 }],
-                max_tokens=200,
-                temperature=0.9
+                max_tokens=200,  # トークン数を増加
+                temperature=0.9  # 多様性を増すために温度を上げる
             )
             print("🔸 タイトル生成完了")
             sys.stdout.flush()
             title_raw = title_response.choices[0].message.content.strip()
             title = title_raw.split("1.")[1].strip().split("\n")[0] if "1." in title_raw else title_raw.strip().split("\n")[0]
 
-            # 🔹 本文生成（gpt-4-turbo）
+            # 🔹 本文生成
             print("🔹 本文生成開始")
             sys.stdout.flush()
             content_response = client.chat.completions.create(
-                model="gpt-4-turbo",  # 新しいモデル gpt-4-turbo を使用
+                model="gpt-4-turbo",  # gpt-4-turboを使用
                 messages=[{
                     "role": "user",
                     "content": f"記事タイトル: {title}\n\n{body_prompt}"
                 }],
-                max_tokens=4000,
-                temperature=0.9
+                max_tokens=4000,  # 長文を生成するためにトークン数を増加
+                temperature=0.9  # 多様性を増すために温度を上げる
             )
             print("🔸 本文生成完了")
             sys.stdout.flush()
             body = content_response.choices[0].message.content.strip()
 
-            # 🔹 画像検索（関連性の高い画像を取得）
-            # 画像検索
+            # 🔹 画像検索
             print("🔹 画像取得開始")
             sys.stdout.flush()
             image_url = None
@@ -75,7 +74,6 @@ def generate_article(post_id, title_prompt, body_prompt, openai_api_key, pixabay
             except Exception as img_err:
                 print(f"[Pixabay画像取得エラー] {img_err}")
                 sys.stdout.flush()
-
 
             # 🔹 DB更新
             post.title = title
@@ -96,7 +94,8 @@ def run_article_worker(app):
         with app.app_context():
             print("🟢 記事生成ワーカーモード：並列処理")
             while True:
-                pending_posts = ScheduledPost.query.filter_by(status='pending').limit(10).all()
+                # 1つの投稿に対してのみ生成処理を実行
+                pending_posts = ScheduledPost.query.filter_by(status='pending').limit(3).all()
                 if not pending_posts:
                     time.sleep(10)
                     continue
@@ -104,7 +103,7 @@ def run_article_worker(app):
                 print(f"🟡 処理対象: {len(pending_posts)} 件（並列処理）")
                 sys.stdout.flush()
 
-                with ThreadPoolExecutor(max_workers=10) as executor:
+                with ThreadPoolExecutor(max_workers=3) as executor:
                     for post in pending_posts:
                         executor.submit(
                             generate_article,
@@ -115,7 +114,6 @@ def run_article_worker(app):
                             os.getenv("PIXABAY_API_KEY")
                         )
 
-                time.sleep(5)  # 次のチェックまで少し待つ
-
+                time.sleep(5)
     thread = threading.Thread(target=worker_loop, daemon=True)
     thread.start()
