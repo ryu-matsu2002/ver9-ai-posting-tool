@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}プロンプト管理{% endblock %}
+
+{% block content %}
+<h1>ジャンル別プロンプト管理</h1>
+
+<!-- フラッシュメッセージ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div style="padding: 10px; margin-bottom: 10px; background-color: #eee; border-left: 5px solid #007bff;">
+        <strong>{{ category.title() }}:</strong> {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<!-- 登録フォーム -->
+<form method="POST" style="margin-bottom: 40px;">
+  <label>ジャンル名：</label><br>
+  <input type="text" name="genre" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+  <label>記事タイトル用プロンプト：</label><br>
+  <textarea name="title_prompt" rows="3" required style="width: 100%; padding: 8px; margin-bottom: 10px;"></textarea><br>
+
+  <label>記事本文用プロンプト：</label><br>
+  <textarea name="body_prompt" rows="5" required style="width: 100%; padding: 8px; margin-bottom: 15px;"></textarea><br>
+
+  <button type="submit" style="background-color: #1a73e8; color: white; padding: 10px 20px; border: none; cursor: pointer;">
+    登録する
+  </button>
+</form>
+
+<!-- 登録済みプロンプト一覧 -->
+<h2>登録済みジャンル一覧</h2>
+{% if prompts %}
+  {% for prompt in prompts %}
+    <div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 6px; background-color: #f9f9f9;">
+      <h3>{{ prompt.genre }}</h3>
+      <p><strong>タイトルプロンプト:</strong><br>{{ prompt.title_prompt | e }}</p>
+      <p><strong>本文プロンプト:</strong><br>{{ prompt.body_prompt | e }}</p>
+      <form method="POST" action="{{ url_for('prompt.delete_prompt', prompt_id=prompt.id) }}">
+        <button type="submit" onclick="return confirm('本当に削除しますか？');"
+                style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; cursor: pointer;">
+          削除
+        </button>
+      </form>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>まだプロンプトは登録されていません。</p>
+{% endif %}
+{% endblock %}

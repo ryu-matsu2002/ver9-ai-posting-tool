@@ -1,31 +1,30 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 import os
 import openai
 import requests
 import random
 from openai import OpenAI
+from .models import PromptTemplate  # ✅ 追加：ジャンル読み込み用
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/', methods=['GET', 'POST'])
 def index():
     results = []
+    genres = PromptTemplate.query.order_by(PromptTemplate.genre).all()  # ✅ ジャンル一覧を取得
 
     if request.method == 'POST':
-        # フォームから取得
         raw_keywords = request.form['keywords']
         title_prompt = request.form['title_prompt']
         body_prompt = request.form['body_prompt']
 
-        # 改行で分割、空白除去して最大40件まで取得
         keywords = [k.strip() for k in raw_keywords.strip().splitlines() if k.strip()][:40]
 
-        # OpenAIクライアント初期化
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         pixabay_key = os.getenv("PIXABAY_API_KEY")
 
         for keyword in keywords:
-            num_articles = random.randint(2, 3)  # 各キーワードで2～3記事生成
+            num_articles = random.randint(2, 3)
 
             for _ in range(num_articles):
                 # タイトル生成
@@ -40,7 +39,6 @@ def index():
                 )
                 title_raw = title_response.choices[0].message.content.strip()
 
-                # タイトル抽出（最初の1本だけ）
                 if "1." in title_raw:
                     title = title_raw.split("1.")[1].strip().split("\n")[0]
                 else:
@@ -68,13 +66,24 @@ def index():
                     if data['hits']:
                         image_url = data['hits'][0]['webformatURL']
                 except:
-                    pass  # Pixabayエラー時は画像なし
+                    pass
 
-                # 結果リストに追加
                 results.append({
                     "title": title,
                     "content": content,
                     "image_url": image_url
                 })
 
-    return render_template('index.html', results=results)
+    return render_template('index.html', results=results, genres=genres)  # ✅ ジャンル一覧をテンプレートに渡す
+
+
+# ✅ JavaScriptから選ばれたジャンルのプロンプトを取得するAPI
+@main_bp.route('/get_prompt/<genre>')
+def get_prompt(genre):
+    prompt = PromptTemplate.query.filter_by(genre=genre).first()
+    if prompt:
+        return jsonify({
+            "title_prompt": prompt.title_prompt,
+            "body_prompt": prompt.body_prompt
+        })
+    return jsonify({"error": "プロンプトが見つかりません"}), 404

@@ -2,36 +2,68 @@
 {% block title %}記事生成{% endblock %}
 
 {% block content %}
-    <h1>記事を生成する</h1>
+<h1>記事を生成する</h1>
 
-    <form method="POST">
-        <label for="keywords">キーワード一覧（1行に1キーワード、最大40件）：</label><br>
-        <textarea id="keywords" name="keywords" rows="10" required
-                  style="width: 100%; padding: 8px; margin-bottom: 20px;"
-                  placeholder="例：\n一人旅　おすすめ\n睡眠の質　改善\nSEO対策　方法\n..."></textarea><br>
-
-        <label for="title_prompt">記事タイトル用プロンプト：</label><br>
-        <textarea id="title_prompt" name="title_prompt" rows="3" required style="width: 100%; padding: 8px; margin-bottom: 15px;"></textarea><br>
-
-        <label for="body_prompt">記事本文用プロンプト：</label><br>
-        <textarea id="body_prompt" name="body_prompt" rows="6" required style="width: 100%; padding: 8px; margin-bottom: 20px;"></textarea><br>
-
-        <button type="submit" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; cursor: pointer;">
-            生成する
-        </button>
-    </form>
-
-    {% if results %}
-        <hr>
-        <h2>生成された記事一覧（{{ results | length }} 件）</h2>
-        {% for item in results %}
-            <div style="margin-bottom: 40px; padding: 20px; background-color: #ffffff; border: 1px solid #ccc; border-radius: 8px;">
-                <h3>{{ item.title }}</h3>
-                <div style="white-space: pre-wrap; margin-bottom: 10px;">{{ item.content }}</div>
-                {% if item.image_url %}
-                    <img src="{{ item.image_url }}" alt="記事画像" style="max-width: 100%; margin-top: 10px;">
-                {% endif %}
-            </div>
+<form method="POST">
+    <!-- 🔽 ジャンル選択ドロップダウン -->
+    <label for="genre_select">ジャンル選択（登録済みプロンプトを自動反映）：</label><br>
+    <select id="genre_select" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+        <option value="">-- ジャンルを選択してください --</option>
+        {% for g in genres %}
+            <option value="{{ g.genre }}">{{ g.genre }}</option>
         {% endfor %}
-    {% endif %}
+    </select><br>
+
+    <label for="keywords">キーワード一覧（1行に1キーワード、最大40件）：</label><br>
+    <textarea id="keywords" name="keywords" rows="10" required
+              style="width: 100%; padding: 8px; margin-bottom: 20px;"
+              placeholder="例：\n一人旅　おすすめ\n睡眠の質　改善\nSEO対策　方法\n..."></textarea><br>
+
+    <label for="title_prompt">記事タイトル用プロンプト：</label><br>
+    <textarea id="title_prompt" name="title_prompt" rows="3" required style="width: 100%; padding: 8px; margin-bottom: 15px;"></textarea><br>
+
+    <label for="body_prompt">記事本文用プロンプト：</label><br>
+    <textarea id="body_prompt" name="body_prompt" rows="6" required style="width: 100%; padding: 8px; margin-bottom: 20px;"></textarea><br>
+
+    <button type="submit" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; cursor: pointer;">
+        生成する
+    </button>
+</form>
+
+{% if results %}
+    <hr>
+    <h2>生成された記事一覧（{{ results | length }} 件）</h2>
+    {% for item in results %}
+        <div style="margin-bottom: 40px; padding: 20px; background-color: #ffffff; border: 1px solid #ccc; border-radius: 8px;">
+            <h3>{{ item.title }}</h3>
+            <div style="white-space: pre-wrap; margin-bottom: 10px;">{{ item.content }}</div>
+            {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="記事画像" style="max-width: 100%; margin-top: 10px;">
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- 🔁 JSでジャンルに応じてプロンプトを自動反映 -->
+<script>
+    document.getElementById("genre_select").addEventListener("change", function () {
+        const genre = this.value;
+        if (!genre) return;
+
+        fetch(`/get_prompt/${encodeURIComponent(genre)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.title_prompt && data.body_prompt) {
+                    document.getElementById("title_prompt").value = data.title_prompt;
+                    document.getElementById("body_prompt").value = data.body_prompt;
+                } else {
+                    alert("プロンプトの取得に失敗しました。");
+                }
+            })
+            .catch(err => {
+                alert("エラーが発生しました。");
+                console.error(err);
+            });
+    });
+</script>
 {% endblock %}
