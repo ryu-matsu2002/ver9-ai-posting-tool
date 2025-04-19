@@ -8,8 +8,11 @@
         <label for="keyword">キーワード：</label><br>
         <input type="text" id="keyword" name="keyword" required style="width: 100%; padding: 8px; margin-bottom: 15px;"><br>
 
-        <label for="prompt">プロンプト：</label><br>
-        <textarea id="prompt" name="prompt" rows="6" required style="width: 100%; padding: 8px; margin-bottom: 20px;"></textarea><br>
+        <label for="title_prompt">記事タイトル用プロンプト：</label><br>
+        <textarea id="title_prompt" name="title_prompt" rows="3" required style="width: 100%; padding: 8px; margin-bottom: 15px;"></textarea><br>
+
+        <label for="body_prompt">記事本文用プロンプト：</label><br>
+        <textarea id="body_prompt" name="body_prompt" rows="6" required style="width: 100%; padding: 8px; margin-bottom: 20px;"></textarea><br>
 
         <button type="submit" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; cursor: pointer;">
             生成する
