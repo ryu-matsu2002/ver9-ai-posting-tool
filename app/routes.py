@@ -3,6 +3,8 @@ import os
 import openai
 import requests
 
+from openai import OpenAI
+
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/', methods=['GET', 'POST'])
@@ -16,26 +18,30 @@ def index():
         title_prompt = request.form['title_prompt']
         body_prompt = request.form['body_prompt']
 
-        # OpenAI APIキー
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        # OpenAIクライアント初期化
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
         # タイトル生成
-        title_response = openai.ChatCompletion.create(
+        title_response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": f"キーワード: {keyword}\n\n{title_prompt}"}],
+            messages=[
+                {"role": "user", "content": f"キーワード: {keyword}\n\n{title_prompt}"}
+            ],
             max_tokens=150,
             temperature=0.8
         )
-        title = title_response.choices[0].message['content'].strip()
+        title = title_response.choices[0].message.content.strip()
 
         # 本文生成
-        content_response = openai.ChatCompletion.create(
+        content_response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": f"記事タイトル: {title}\n\n{body_prompt}"}],
+            messages=[
+                {"role": "user", "content": f"記事タイトル: {title}\n\n{body_prompt}"}
+            ],
             max_tokens=3200,
             temperature=0.8
         )
-        content = content_response.choices[0].message['content'].strip()
+        content = content_response.choices[0].message.content.strip()
 
         # Pixabay画像検索
         pixabay_key = os.getenv("PIXABAY_API_KEY")
