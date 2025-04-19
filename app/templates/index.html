@@ -5,8 +5,10 @@
     <h1>記事を生成する</h1>
 
     <form method="POST">
-        <label for="keyword">キーワード：</label><br>
-        <input type="text" id="keyword" name="keyword" required style="width: 100%; padding: 8px; margin-bottom: 15px;"><br>
+        <label for="keywords">キーワード一覧（1行に1キーワード、最大40件）：</label><br>
+        <textarea id="keywords" name="keywords" rows="10" required
+                  style="width: 100%; padding: 8px; margin-bottom: 20px;"
+                  placeholder="例：\n一人旅　おすすめ\n睡眠の質　改善\nSEO対策　方法\n..."></textarea><br>
 
         <label for="title_prompt">記事タイトル用プロンプト：</label><br>
         <textarea id="title_prompt" name="title_prompt" rows="3" required style="width: 100%; padding: 8px; margin-bottom: 15px;"></textarea><br>
@@ -19,19 +21,17 @@
         </button>
     </form>
 
-    {% if title %}
+    {% if results %}
         <hr>
-        <h2>生成されたタイトル</h2>
-        <p>{{ title }}</p>
-
-        <h2>生成された本文</h2>
-        <div style="white-space: pre-wrap; background: #fff; padding: 15px; border: 1px solid #ccc;">
-            {{ content }}
-        </div>
-
-        {% if image_url %}
-            <h2>アイキャッチ画像</h2>
-            <img src="{{ image_url }}" alt="記事画像" style="max-width: 100%; margin-top: 10px;">
-        {% endif %}
+        <h2>生成された記事一覧（{{ results | length }} 件）</h2>
+        {% for item in results %}
+            <div style="margin-bottom: 40px; padding: 20px; background-color: #ffffff; border: 1px solid #ccc; border-radius: 8px;">
+                <h3>{{ item.title }}</h3>
+                <div style="white-space: pre-wrap; margin-bottom: 10px;">{{ item.content }}</div>
+                {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="記事画像" style="max-width: 100%; margin-top: 10px;">
+                {% endif %}
+            </div>
+        {% endfor %}
     {% endif %}
 {% endblock %}
