@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 
 from .routes import main_bp
 from .prompt_templates import prompt_bp  # ✅ 追加：ジャンル別プロンプト機能用
+from .admin_log import log_bp
 
 def create_app():
     app = Flask(__name__)
@@ -21,5 +22,6 @@ def create_app():
     # Blueprint登録
     app.register_blueprint(main_bp)
     app.register_blueprint(prompt_bp)  # ✅ プロンプト機能をルーティングに追加
+    app.register_blueprint(log_bp)
 
     return app
