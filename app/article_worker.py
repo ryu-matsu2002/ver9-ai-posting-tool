@@ -4,7 +4,6 @@ import time
 import threading
 import requests
 from openai import OpenAI
-from concurrent.futures import ThreadPoolExecutor  # ✅ これを忘れずに追加！
 from .models import db, ScheduledPost
 from flask import current_app
 
@@ -88,32 +87,35 @@ def generate_article(post_id, title_prompt, body_prompt, openai_api_key, pixabay
         except Exception as e:
             print(f"❌ 生成失敗（post_id={post_id}）: {e}")
             sys.stdout.flush()
+            # エラー時にDBのステータスを変更して再試行可能にする
+            post.status = 'failed'
+            db.session.commit()
 
 def run_article_worker(app):
     def worker_loop():
         with app.app_context():
-            print("🟢 記事生成ワーカーモード：並列処理")
+            print("🟢 記事生成ワーカーモード：シーケンシャル処理")
             while True:
-                # 1つの投稿に対してのみ生成処理を実行
-                pending_posts = ScheduledPost.query.filter_by(status='pending').limit(3).all()
+                # 一度に処理する件数を1件に変更
+                pending_posts = ScheduledPost.query.filter_by(status='pending').limit(1).all()
                 if not pending_posts:
                     time.sleep(10)
                     continue
 
-                print(f"🟡 処理対象: {len(pending_posts)} 件（並列処理）")
+                print(f"🟡 処理対象: {len(pending_posts)} 件（シーケンシャル処理）")
                 sys.stdout.flush()
 
-                with ThreadPoolExecutor(max_workers=3) as executor:
-                    for post in pending_posts:
-                        executor.submit(
-                            generate_article,
-                            post.id,
-                            "以下のキーワードを使って魅力的な記事タイトルを考えてください。",
-                            "この記事タイトルに対して読者が納得できる解説記事を書いてください。",
-                            os.getenv("OPENAI_API_KEY"),
-                            os.getenv("PIXABAY_API_KEY")
-                        )
+                for post in pending_posts:
+                    # 各記事を順番に処理
+                    generate_article(
+                        post.id,
+                        post.title_prompt,  # ユーザーから渡されたタイトルプロンプトを使用
+                        post.body_prompt,   # ユーザーから渡された本文プロンプトを使用
+                        os.getenv("OPENAI_API_KEY"),
+                        os.getenv("PIXABAY_API_KEY")
+                    )
 
-                time.sleep(5)
+                time.sleep(5)  # 次のチェックまで少し待つ
+
     thread = threading.Thread(target=worker_loop, daemon=True)
     thread.start()

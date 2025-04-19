@@ -3,53 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ post.title }}</title>
-    <style>
-        body {
-            font-family: 'Helvetica Neue', sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px;
-            line-height: 1.8;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-
-        h1 {
-            font-size: 28px;
-            margin-bottom: 20px;
-            border-left: 6px solid #0073aa;
-            padding-left: 10px;
-        }
-
-        img {
-            max-width: 100%;
-            margin: 30px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        .content {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
-        }
-
-        .meta {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 15px;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="content">
-        <h1>{{ post.title }}</h1>
-        <div class="meta">キーワード: {{ post.keyword }} | 投稿日時: {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+<body class="bg-gray-100 text-gray-900 min-h-screen p-8">
+
+    <!-- プレビューコンテナ -->
+    <div class="max-w-4xl mx-auto bg-white shadow-md rounded p-6">
+        
+        <!-- アイキャッチ画像 -->
         {% if post.image_url %}
-            <img src="{{ post.image_url }}" alt="記事画像">
+        <div class="mb-6 text-center">
+            <img src="{{ post.image_url }}" alt="アイキャッチ画像" class="w-full max-w-2xl mx-auto rounded shadow-md">
+        </div>
         {% endif %}
-        <div>{{ post.body | safe }}</div>
+        
+        <!-- 記事タイトル -->
+        <h1 class="text-3xl font-semibold text-blue-600 mb-4">{{ post.title }}</h1>
+
+        <!-- 記事のキーワードと作成日時 -->
+        <div class="text-sm text-gray-500 mb-6">
+            キーワード: {{ post.keyword }} | 作成日時: {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+        </div>
+
+        <!-- 本文（画像とテキストを含む） -->
+        <div class="prose prose-lg prose-indigo max-w-none">
+            <!-- 改行を反映させる -->
+            {{ post.body | replace("\n", "<br>") | safe }}
+        </div>
+
+        <!-- 戻るリンク -->
+        <div class="mt-8">
+            <a href="{{ url_for('log.show_log') }}" class="text-indigo-600 hover:underline">← 投稿ログへ戻る</a>
+        </div>
     </div>
+
 </body>
 </html>

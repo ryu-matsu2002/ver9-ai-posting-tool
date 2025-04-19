@@ -20,3 +20,7 @@ class ScheduledPost(db.Model):
     image_url = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(50), default='pending')  # pending / completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # ここでプロンプトを追加
+    title_prompt = db.Column(db.String(500), nullable=True)  # タイトルプロンプト
+    body_prompt = db.Column(db.String(1000), nullable=True)  # 本文プロンプト
