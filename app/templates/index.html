@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}記事生成{% endblock %}
+
+{% block content %}
+    <h1>記事を生成する</h1>
+
+    <form method="POST">
+        <label for="keyword">キーワード：</label><br>
+        <input type="text" id="keyword" name="keyword" required style="width: 100%; padding: 8px; margin-bottom: 15px;"><br>
+
+        <label for="prompt">プロンプト：</label><br>
+        <textarea id="prompt" name="prompt" rows="6" required style="width: 100%; padding: 8px; margin-bottom: 20px;"></textarea><br>
+
+        <button type="submit" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; cursor: pointer;">
+            生成する
+        </button>
+    </form>
+
+    {% if title %}
+        <hr>
+        <h2>生成されたタイトル</h2>
+        <p>{{ title }}</p>
+
+        <h2>生成された本文</h2>
+        <div style="white-space: pre-wrap; background: #fff; padding: 15px; border: 1px solid #ccc;">
+            {{ content }}
+        </div>
+
+        {% if image_url %}
+            <h2>アイキャッチ画像</h2>
+            <img src="{{ image_url }}" alt="記事画像" style="max-width: 100%; margin-top: 10px;">
+        {% endif %}
+    {% endif %}
+{% endblock %}
